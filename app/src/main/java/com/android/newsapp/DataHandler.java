@@ -19,7 +19,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DataHandler {
+class DataHandler {
 
     // GUARDIAN API keys for the necessary information
     private static final String GUARDIAN_KEY_RESPONSE = "response";
@@ -160,7 +160,7 @@ public class DataHandler {
                 String newsUrl = currentNewsItem.getString(GUARDIAN_KEY_WEBURL);
 
                 // Save all the data in a new NewsItem object
-                NewsItem newsItem = new NewsItem(newsHeadline, newsHeadline, newsCategory, newsDate, newsUrl);
+                NewsItem newsItem = new NewsItem(newsHeadline, newsCategory, newsDate, newsUrl);
 
                 // Add the newsItem to the ArrayList
                 newsList.add(newsItem);

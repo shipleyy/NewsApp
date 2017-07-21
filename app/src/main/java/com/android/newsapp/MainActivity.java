@@ -1,14 +1,17 @@
 package com.android.newsapp;
 
 import android.app.LoaderManager;
+import android.content.Intent;
 import android.content.Loader;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -17,8 +20,12 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
+import static android.content.Intent.ACTION_VIEW;
+import static android.media.CamcorderProfile.get;
+
 public class MainActivity extends AppCompatActivity
-        implements LoaderManager.LoaderCallbacks<List<NewsItem>>, SwipeRefreshLayout.OnRefreshListener {
+        implements LoaderManager.LoaderCallbacks<List<NewsItem>>, SwipeRefreshLayout.OnRefreshListener,
+ItemClickListener {
 
     // The ProgressBar to be shown while data is downloading
     private ProgressBar progressBar;
@@ -26,19 +33,25 @@ public class MainActivity extends AppCompatActivity
     private static final int NEWS_LOADER_ID = 1;
     // The static API key
     private static final String GUARDIAN_API_KEY = "95c97378-ec53-47e4-b7b3-f35617f98388";
-    // The API URL for all news items
-    private static final String GUARDIAN_NEWS_ALL = "https://content.guardianapis.com/search?api-key=";
+    private static final String GUARDIAN_API_AUTHORITY = "content.guardianapis.com";
+    private static final String GUARDIAN_API_SEARCH = "search";
+    private static final String GUARDIAN_API_BEFOREKEY = "api-key";
     // The API URL
     private String apiUrl;
-    // Declaring the list
-    public static List<NewsItem> listNews;
     // Declaring the adapter
-    private NewsAdapter listAdapter;
+    private NewsAdapter mAdapter;
     // Declaring the SwipeRefreshLayout
     private SwipeRefreshLayout mSwipeRefreshLayout;
     // The network manager
-    public NetworkInfo activeNetwork;
-    public TextView noItems;
+    private NetworkInfo activeNetwork;
+    // Declaring the noItems TextView
+    private TextView noItems;
+    // Declaring the noInternet TextView
+    private TextView noInternet;
+    // Declaring the RecyclerView
+    private RecyclerView recList;
+    // TODO - Declaring the list for onClickListener
+    private List<NewsItem> newsItems;
 
 
     @Override
@@ -50,24 +63,32 @@ public class MainActivity extends AppCompatActivity
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(this);
 
-        // Declaring the empty list TextView and setting the initial visibility
-        noItems = (TextView) findViewById(R.id.empty_text_view);
-        noItems.setVisibility(View.GONE);
+        // Declaring the noInternet TextView and setting the initial visibility
+        noInternet = (TextView) findViewById(R.id.no_internet_textview);
+        noInternet.setVisibility(View.GONE);
+
+        // Declaring the empty list TextView
+        noItems = (TextView) findViewById(R.id.no_items_textview);
 
         // Declaring the ProgressBar and setting the initial visibility
         progressBar = (ProgressBar) findViewById(R.id.loading_spinner);
 
         // Declaring the RecyclerView
-        RecyclerView recList = (RecyclerView) findViewById(R.id.news_recycler_view);
+        recList = (RecyclerView) findViewById(R.id.news_recycler_view);
+
+        // Setting up the adapter
+        mAdapter = new NewsAdapter(this, new ArrayList<NewsItem>());
+
         // setting up the built in LayoutManager
-        LinearLayoutManager llm = new LinearLayoutManager(this);
+        LinearLayoutManager llm = new LinearLayoutManager(getApplicationContext());
         llm.setOrientation(LinearLayoutManager.VERTICAL);
         recList.setLayoutManager(llm);
 
-        // Setting up the adapter
-        listNews = new ArrayList<>();
-        listAdapter = new NewsAdapter(listNews);
-        recList.setAdapter(listAdapter);
+        // Connecting the adapter to the list
+        recList.setAdapter(mAdapter);
+
+        // Adding a ClickListener to the adapter
+        mAdapter.setClickListener(this);
 
         // Checks for network connectivity
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
@@ -81,16 +102,28 @@ public class MainActivity extends AppCompatActivity
             final LoaderManager loaderManager = getLoaderManager();
 
             // Create the initial API query for all news items
-            apiUrl = GUARDIAN_NEWS_ALL + GUARDIAN_API_KEY;
+            Uri.Builder builder = new Uri.Builder();
+            builder.scheme("https")
+                    .authority(GUARDIAN_API_AUTHORITY)
+                    .appendPath(GUARDIAN_API_SEARCH)
+                    .appendQueryParameter(GUARDIAN_API_BEFOREKEY, GUARDIAN_API_KEY);
+            apiUrl = builder.build().toString();
             // Start loading the information in a background task
             loaderManager.initLoader(NEWS_LOADER_ID, null, this);
         } else {
             Toast.makeText(MainActivity.this, R.string.no_internet,
                     Toast.LENGTH_LONG).show();
             progressBar.setVisibility(View.GONE);
-            noItems.setVisibility(View.VISIBLE);
-            noItems.setText(getString(R.string.no_internet));
+            noInternet.setVisibility(View.VISIBLE);
+            noInternet.setText(getString(R.string.no_internet));
         }
+    }
+
+    @Override
+    public void onClick(View view, int position) {
+        final NewsItem news = newsItems.get(position);
+        Intent i = new Intent(ACTION_VIEW, Uri.parse(news.getUrl()));
+        startActivity(i);
     }
 
     @Override
@@ -102,17 +135,25 @@ public class MainActivity extends AppCompatActivity
     public void onLoadFinished(Loader<List<NewsItem>> loader, List<NewsItem> data) {
         if (activeNetwork != null && activeNetwork.isConnected()) {
             mSwipeRefreshLayout.setRefreshing(false);
-            listAdapter.clear();
-            listAdapter.addAll(data);
+            mAdapter.clear();
+            mAdapter.addAll(data);
             progressBar.setVisibility(View.GONE);
         } else {
+            noInternet.setVisibility(View.VISIBLE);
+        }
+        // In case no items are displayed even though there is an internet connection
+        if (data.isEmpty()) {
+            recList.setVisibility(View.GONE);
             noItems.setVisibility(View.VISIBLE);
+        } else {
+            recList.setVisibility(View.VISIBLE);
+            noItems.setVisibility(View.GONE);
         }
     }
 
     @Override
     public void onLoaderReset(Loader<List<NewsItem>> loader) {
-        listAdapter.clear();
+        mAdapter.clear();
     }
 
     @Override

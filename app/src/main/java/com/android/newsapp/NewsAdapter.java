@@ -1,14 +1,11 @@
 package com.android.newsapp;
 
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.text.ParseException;
@@ -18,83 +15,81 @@ import java.util.List;
 
 public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder> {
 
-    private List<NewsItem> newsList;
-    public static NewsItem ni;
-    private RelativeLayout rl;
+    private final List<NewsItem> mNewsList;
+    private final Context mContext;
+    private ItemClickListener clickListener;
 
-    public static class NewsViewHolder extends RecyclerView.ViewHolder {
 
-        public TextView vAuthor, vHeadline, vCategory, vDateTime;
-        public RelativeLayout rl;
-
-        public NewsViewHolder(View itemView) {
-            super(itemView);
-            vHeadline = (TextView) itemView.findViewById(R.id.article_headline);
-            vCategory = (TextView) itemView.findViewById(R.id.article_category);
-            vDateTime = (TextView) itemView.findViewById(R.id.article_time);
-            rl = (RelativeLayout) itemView.findViewById(R.id.rl);
-            rl.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Context context = v.getContext();
-                    Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(ni.url));
-                    context.startActivity(i);
-                }
-            });
-        }
-    }
-
-    public NewsAdapter(List<NewsItem> newsList) {
-        this.newsList = newsList;
+    public NewsAdapter(Context context, List<NewsItem> newsList) {
+        mContext = context;
+        mNewsList = newsList;
     }
 
     @Override
-    public NewsAdapter.NewsViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.
-                from(parent.getContext()).
-                inflate(R.layout.listitem, parent, false);
-        return new NewsViewHolder(itemView);
-
+    public NewsViewHolder onCreateViewHolder(ViewGroup viewGroup, int position) {
+        // Inflate the Layout listitem.xml
+        View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.listitem, viewGroup, false);
+        return new NewsViewHolder(v);
     }
 
     @Override
     public void onBindViewHolder(NewsViewHolder holder, int position) {
 
-        //Find the current news item in the ArrayList
-        ni = newsList.get(position);
+        // Getting the current item from the list
+        final NewsItem ni = mNewsList.get(position);
 
         // Display the information from the current item in the list
-        assert ni != null;
-        holder.vHeadline.setText(ni.headline);
-        holder.vCategory.setText(ni.category);
-        String date = ni.dateTime;
-        String newsDate = formatDate(date);
-        holder.vDateTime.setText(newsDate);
+        holder.vHeadline.setText(ni.getHeadline());
+        holder.vCategory.setText(ni.getCategory());
+        holder.vDateTime.setText(ni.getDateTime());
     }
 
     @Override
     public int getItemCount() {
-        return newsList.size();
+        return mNewsList.size();
     }
-
 
     // Clear the current list
     public void clear() {
-        int size = this.newsList.size();
-        this.newsList.clear();
+        int size = mNewsList.size();
+        mNewsList.clear();
         notifyItemRangeRemoved(0, size);
+    }
+
+    public void setClickListener(ItemClickListener itemClickListener) {
+        this.clickListener = itemClickListener;
+    }
+
+    public class NewsViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+        private final TextView vHeadline;
+        private final TextView vCategory;
+        private final TextView vDateTime;
+
+        // The NewsViewHolder constructor
+        public NewsViewHolder(View itemView) {
+            super(itemView);
+            vHeadline = (TextView) itemView.findViewById(R.id.article_headline);
+            vCategory = (TextView) itemView.findViewById(R.id.article_category);
+            vDateTime = (TextView) itemView.findViewById(R.id.article_time);
+        }
+
+        @Override
+        public void onClick(View v) {
+            if (clickListener != null) clickListener.onClick(v, getAdapterPosition());
+        }
     }
 
     /**
      * Adds new objects to the listVew
      */
     public void addAll(List<NewsItem> newsList) {
-        this.newsList.addAll(newsList);
+        mNewsList.addAll(newsList);
         notifyDataSetChanged();
     }
 
     // Formats the date from the JSON to an easier readable format
-    public String formatDate(String date) {
+    private String formatDate(String date) {
 
         String dateFormatted = "";
         String dateNew = date.substring(0, 10); // gets date in yyyy-mm-dd format from timestamp

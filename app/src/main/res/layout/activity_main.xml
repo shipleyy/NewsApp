@@ -19,11 +19,20 @@
     </android.support.v4.widget.SwipeRefreshLayout>
 
     <TextView
-        android:id="@+id/empty_text_view"
+        android:id="@+id/no_internet_textview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:textAppearance="?android:textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/no_items_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:textAppearance="?android:textAppearanceMedium"
+        android:text="@string/no_items"
+        android:visibility="gone" />
 
     <ProgressBar
         android:id="@+id/loading_spinner"

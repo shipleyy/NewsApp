@@ -5,9 +5,9 @@ import android.content.Context;
 
 import java.util.List;
 
-public class NewsLoader extends android.content.AsyncTaskLoader<List<NewsItem>> {
+class NewsLoader extends android.content.AsyncTaskLoader<List<NewsItem>> {
 
-    private String apiUrl;
+    private final String apiUrl;
 
     public NewsLoader(Context context, String url) {
         super(context);
