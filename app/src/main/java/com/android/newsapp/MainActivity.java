@@ -24,8 +24,7 @@ import static android.content.Intent.ACTION_VIEW;
 import static android.media.CamcorderProfile.get;
 
 public class MainActivity extends AppCompatActivity
-        implements LoaderManager.LoaderCallbacks<List<NewsItem>>, SwipeRefreshLayout.OnRefreshListener,
-ItemClickListener {
+        implements LoaderManager.LoaderCallbacks<List<NewsItem>>, SwipeRefreshLayout.OnRefreshListener {
 
     // The ProgressBar to be shown while data is downloading
     private ProgressBar progressBar;
@@ -50,8 +49,6 @@ ItemClickListener {
     private TextView noInternet;
     // Declaring the RecyclerView
     private RecyclerView recList;
-    // TODO - Declaring the list for onClickListener
-    private List<NewsItem> newsItems;
 
 
     @Override
@@ -87,9 +84,6 @@ ItemClickListener {
         // Connecting the adapter to the list
         recList.setAdapter(mAdapter);
 
-        // Adding a ClickListener to the adapter
-        mAdapter.setClickListener(this);
-
         // Checks for network connectivity
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         activeNetwork = cm.getActiveNetworkInfo();
@@ -117,13 +111,6 @@ ItemClickListener {
             noInternet.setVisibility(View.VISIBLE);
             noInternet.setText(getString(R.string.no_internet));
         }
-    }
-
-    @Override
-    public void onClick(View view, int position) {
-        final NewsItem news = newsItems.get(position);
-        Intent i = new Intent(ACTION_VIEW, Uri.parse(news.getUrl()));
-        startActivity(i);
     }
 
     @Override

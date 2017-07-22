@@ -1,6 +1,8 @@
 package com.android.newsapp;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,6 +25,15 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
     public NewsAdapter(Context context, List<NewsItem> newsList) {
         mContext = context;
         mNewsList = newsList;
+
+        clickListener = new ItemClickListener() {
+            @Override
+            public void onClick(View view, int position) {
+                final NewsItem news = mNewsList.get(position);
+                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(news.getUrl()));
+                mContext.startActivity(i);
+            }
+        };
     }
 
     @Override
@@ -72,6 +83,8 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
             vHeadline = (TextView) itemView.findViewById(R.id.article_headline);
             vCategory = (TextView) itemView.findViewById(R.id.article_category);
             vDateTime = (TextView) itemView.findViewById(R.id.article_time);
+
+            itemView.setOnClickListener(this);
         }
 
         @Override
